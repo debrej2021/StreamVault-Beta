@@ -1,0 +1,44 @@
+version: '3.9'
+
+# ─────────────────────────────────────────────────────────────────────────────
+# docker-compose up
+# Starts both the .NET API and the Vite dev server in containers.
+# For production, swap the frontend service for a proper nginx build.
+# ─────────────────────────────────────────────────────────────────────────────
+
+services:
+
+  api:
+    build:
+      context: ./backend/StreamVault.API
+      dockerfile: Dockerfile
+    ports:
+      - "7001:443"
+      - "5001:80"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - YouTube__ApiKey=${YOUTUBE_API_KEY}      # set in .env file
+    volumes:
+      - ./backend/StreamVault.API:/app
+    networks:
+      - streamvault
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.dev
+    ports:
+      - "5173:5173"
+    environment:
+      - VITE_API_URL=http://api:5001
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    depends_on:
+      - api
+    networks:
+      - streamvault
+
+networks:
+  streamvault:
+    driver: bridge
